@@ -99,6 +99,32 @@ class SalesOrderItem(db.Model):
     def __repr__(self):
         return f'<SalesOrderItem SO:{self.sales_order_id} Product:{self.product_id}>'
 
+class PurchaseInvoice(db.Model):
+    """Model untuk faktur pembelian dari supplier"""
+    id = db.Column(db.Integer, primary_key=True)
+    purchase_order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=False)
+    invoice_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    total_amount = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='Unpaid') # Unpaid, Paid
+
+    purchase_order = db.relationship('PurchaseOrder', backref=db.backref('invoice', uselist=False))
+
+    def __repr__(self):
+        return f'<PurchaseInvoice {self.id} for PO {self.purchase_order_id}>'
+
+class SalesInvoice(db.Model):
+    """Model untuk faktur penjualan ke customer"""
+    id = db.Column(db.Integer, primary_key=True)
+    sales_order_id = db.Column(db.Integer, db.ForeignKey('sales_order.id'), nullable=False)
+    invoice_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    total_amount = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='Unpaid') # Unpaid, Paid
+
+    sales_order = db.relationship('SalesOrder', backref=db.backref('invoice', uselist=False))
+
+    def __repr__(self):
+        return f'<SalesInvoice {self.id} for SO {self.sales_order_id}>'
+
 # --- Routes ---
 
 @app.route('/')
@@ -301,16 +327,25 @@ def delete_po_item(item_id):
 
 @app.route('/purchase-orders/<int:po_id>/receive', methods=['POST'])
 def receive_po(po_id):
-    """Menyelesaikan PO dan menerima semua barang, memperbarui stok."""
+    """Menyelesaikan PO, menerima barang, memperbarui stok, dan membuat faktur."""
     po = PurchaseOrder.query.get_or_404(po_id)
 
     if po.status == 'Pending':
+        total_amount = 0
         # Loop through each item in the PO
         for item in po.items:
             product = Product.query.get(item.product_id)
             if product:
                 # Increase the stock
                 product.stock += item.quantity
+            total_amount += item.quantity * item.price_per_unit
+
+        # Create invoice
+        new_invoice = PurchaseInvoice(
+            purchase_order_id=po.id,
+            total_amount=total_amount
+        )
+        db.session.add(new_invoice)
 
         # Update the PO status
         po.status = 'Completed'
@@ -389,7 +424,7 @@ def delete_so_item(item_id):
 
 @app.route('/sales-orders/<int:so_id>/ship', methods=['POST'])
 def ship_so(so_id):
-    """Menyelesaikan SO dan mengirim semua barang, memperbarui stok."""
+    """Menyelesaikan SO, mengirim barang, memperbarui stok, dan membuat faktur."""
     so = SalesOrder.query.get_or_404(so_id)
 
     if so.status != 'Pending':
@@ -399,20 +434,79 @@ def ship_so(so_id):
     for item in so.items:
         if item.product.stock < item.quantity:
             # Not enough stock for at least one item, abort the whole operation
-            # In a real app, we would use flash messaging to notify the user.
             print(f"ERROR: Insufficient stock for {item.product.name}. Required: {item.quantity}, Available: {item.product.stock}")
             return redirect(url_for('view_sales_order', id=so_id))
 
-    # 2. If all checks pass, proceed with stock reduction
+    # 2. If all checks pass, proceed with stock reduction and invoice calculation
+    total_amount = 0
     for item in so.items:
         item.product.stock -= item.quantity
+        total_amount += item.quantity * item.price_per_unit
 
-    # 3. Update the SO status
+    # 3. Create invoice
+    new_invoice = SalesInvoice(
+        sales_order_id=so.id,
+        total_amount=total_amount
+    )
+    db.session.add(new_invoice)
+
+    # 4. Update the SO status
     so.status = 'Shipped'
 
     db.session.commit()
 
     return redirect(url_for('view_sales_order', id=so_id))
+
+
+# --- Financial Routes ---
+
+@app.route('/reports/profit')
+def profit_report():
+    """Menampilkan laporan keuntungan kotor."""
+    # Ambil semua item dari sales order yang sudah dikirim
+    shipped_items = SalesOrderItem.query.join(SalesOrder).filter(SalesOrder.status == 'Shipped').all()
+    return render_template('profit_report.html', sales_items=shipped_items)
+
+@app.route('/invoices')
+def list_invoices():
+    """Menampilkan daftar semua faktur pembelian dan penjualan."""
+    purchase_invoices = PurchaseInvoice.query.order_by(PurchaseInvoice.invoice_date.desc()).all()
+    sales_invoices = SalesInvoice.query.order_by(SalesInvoice.invoice_date.desc()).all()
+    return render_template('invoices.html', purchase_invoices=purchase_invoices, sales_invoices=sales_invoices)
+
+@app.route('/invoices/purchase/<int:invoice_id>/pay', methods=['POST'])
+def pay_purchase_invoice(invoice_id):
+    """Menandai faktur pembelian sebagai lunas."""
+    invoice = PurchaseInvoice.query.get_or_404(invoice_id)
+    invoice.status = 'Paid'
+    db.session.commit()
+    return redirect(url_for('list_invoices'))
+
+@app.route('/invoices/sales/<int:invoice_id>/pay', methods=['POST'])
+def receive_payment_sales_invoice(invoice_id):
+    """Menandai faktur penjualan sebagai lunas."""
+    invoice = SalesInvoice.query.get_or_404(invoice_id)
+    invoice.status = 'Paid'
+    db.session.commit()
+    return redirect(url_for('list_invoices'))
+
+@app.route('/invoices/sales/<int:invoice_id>/print')
+def print_sales_invoice(invoice_id):
+    """Menampilkan halaman cetak untuk faktur penjualan."""
+    invoice = SalesInvoice.query.get_or_404(invoice_id)
+    return render_template('invoice_print.html', invoice=invoice)
+
+@app.route('/invoices/purchase/<int:invoice_id>')
+def view_purchase_invoice(invoice_id):
+    """Menampilkan detail faktur pembelian."""
+    invoice = PurchaseInvoice.query.get_or_404(invoice_id)
+    return render_template('invoice_detail.html', invoice=invoice, invoice_type='purchase')
+
+@app.route('/invoices/sales/<int:invoice_id>')
+def view_sales_invoice(invoice_id):
+    """Menampilkan detail faktur penjualan."""
+    invoice = SalesInvoice.query.get_or_404(invoice_id)
+    return render_template('invoice_detail.html', invoice=invoice, invoice_type='sales')
 
 # --- Main Execution ---
 

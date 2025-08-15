@@ -15,6 +15,9 @@
           {{ so.status }}
         </span>
       </p>
+      {% if so.status == 'Shipped' and so.invoice %}
+        <a href="{{ url_for('view_sales_invoice', invoice_id=so.invoice.id) }}" class="btn btn-primary">Lihat Faktur</a>
+      {% endif %}
     </div>
   </div>
 

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Laporan Keuntungan{% endblock %}
+
+{% block content %}
+  <h1>Laporan Keuntungan Kotor</h1>
+  <p>Laporan ini menghitung keuntungan dari setiap barang yang terjual dari Sales Order yang telah dikirim.</p>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Tanggal Kirim</th>
+        <th>SO ID</th>
+        <th>Produk</th>
+        <th>Qty</th>
+        <th>Harga Beli (Rp)</th>
+        <th>Harga Jual (Rp)</th>
+        <th>Keuntungan (Rp)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set total_profit = [0] %}
+      {% for item in sales_items %}
+        {% set profit = (item.price_per_unit - item.product.purchase_price) * item.quantity %}
+        {% if total_profit.append(total_profit.pop() + profit) %}{% endif %}
+        <tr>
+          <td>{{ item.sales_order.order_date.strftime('%Y-%m-%d') }}</td>
+          <td><a href="{{ url_for('view_sales_order', id=item.sales_order.id) }}">SO-{{ item.sales_order.id }}</a></td>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ "{:,.0f}".format(item.product.purchase_price) }}</td>
+          <td>{{ "{:,.0f}".format(item.price_per_unit) }}</td>
+          <td><strong>{{ "{:,.0f}".format(profit) }}</strong></td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="7" class="text-center">Belum ada barang yang terjual.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6" class="text-end"><strong>Total Keuntungan Kotor</strong></td>
+        <td><strong>{{ "{:,.0f}".format(total_profit.pop()) }}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+{% endblock %}

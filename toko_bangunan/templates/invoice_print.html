@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Invoice #SI-{{ invoice.id }}</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        h1 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .text-end { text-align: right; }
+        .footer { margin-top: 40px; text-align: center; font-size: 0.8em; }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="container">
+        <h1>FAKTUR PENJUALAN</h1>
+
+        <table>
+            <tr>
+                <td><strong>No. Faktur:</strong> SI-{{ invoice.id }}</td>
+                <td class="text-end"><strong>Tanggal:</strong> {{ invoice.invoice_date.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <strong>Kepada Yth:</strong><br>
+                    {{ invoice.sales_order.customer.name }}<br>
+                    {{ invoice.sales_order.customer.address or '' }}<br>
+                    {{ invoice.sales_order.customer.phone or '' }}
+                </td>
+            </tr>
+        </table>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Produk</th>
+                    <th>Jumlah</th>
+                    <th>Harga Satuan (Rp)</th>
+                    <th>Subtotal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.sales_order.items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td class="text-end">{{ "{:,.0f}".format(item.price_per_unit) }}</td>
+                    <td class="text-end">{{ "{:,.0f}".format(item.quantity * item.price_per_unit) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total</strong></td>
+                    <td class="text-end"><strong>{{ "{:,.0f}".format(invoice.total_amount) }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="footer">
+            <p>Terima kasih telah berbelanja!</p>
+        </div>
+    </div>
+</body>
+</html>
