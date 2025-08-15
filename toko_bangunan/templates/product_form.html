@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if product %}Edit Barang{% else %}Tambah Barang Baru{% endif %}{% endblock %}
+
+{% block content %}
+  <h1>{% if product %}Edit Barang{% else %}Tambah Barang Baru{% endif %}</h1>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="name" class="form-label">Nama Barang</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ product.name if product else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Deskripsi</label>
+      <textarea class="form-control" id="description" name="description" rows="3">{{ product.description if product else '' }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label for="purchase_price" class="form-label">Harga Beli (Rp)</label>
+      <input type="number" step="any" class="form-control" id="purchase_price" name="purchase_price" value="{{ product.purchase_price if product else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="selling_price" class="form-label">Harga Jual (Rp)</label>
+      <input type="number" step="any" class="form-control" id="selling_price" name="selling_price" value="{{ product.selling_price if product else '' }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">{% if product %}Update Barang{% else %}Simpan Barang{% endif %}</button>
+    <a href="{{ url_for('products') }}" class="btn btn-secondary">Batal</a>
+  </form>
+{% endblock %}

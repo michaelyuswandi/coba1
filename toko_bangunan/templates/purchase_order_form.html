@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Buat Purchase Order Baru{% endblock %}
+
+{% block content %}
+  <h1>Buat Purchase Order Baru</h1>
+  <p>Pilih supplier untuk memulai Purchase Order baru.</p>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="supplier" class="form-label">Supplier</label>
+      <select class="form-select" id="supplier" name="supplier_id" required>
+        <option value="" disabled selected>-- Pilih Supplier --</option>
+        {% for supplier in suppliers %}
+          <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Buat PO</button>
+    <a href="{{ url_for('list_purchase_orders') }}" class="btn btn-secondary">Batal</a>
+  </form>
+{% endblock %}

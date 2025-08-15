@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Buat Sales Order Baru{% endblock %}
+
+{% block content %}
+  <h1>Buat Sales Order Baru</h1>
+  <p>Pilih customer untuk memulai Sales Order baru.</p>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="customer" class="form-label">Customer</label>
+      <select class="form-select" id="customer" name="customer_id" required>
+        <option value="" disabled selected>-- Pilih Customer --</option>
+        {% for customer in customers %}
+          <option value="{{ customer.id }}">{{ customer.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Buat SO</button>
+    <a href="{{ url_for('list_sales_orders') }}" class="btn btn-secondary">Batal</a>
+  </form>
+{% endblock %}

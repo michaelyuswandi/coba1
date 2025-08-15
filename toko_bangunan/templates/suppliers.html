@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Master Supplier{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Master Supplier</h1>
+    <a href="{{ url_for('add_supplier') }}" class="btn btn-primary">Tambah Supplier Baru</a>
+  </div>
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Nama Supplier</th>
+        <th scope="col">Alamat</th>
+        <th scope="col">Telepon</th>
+        <th scope="col">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for supplier in suppliers %}
+        <tr>
+          <td>{{ supplier.name }}</td>
+          <td>{{ supplier.address }}</td>
+          <td>{{ supplier.phone }}</td>
+          <td>
+            <a href="{{ url_for('edit_supplier', id=supplier.id) }}" class="btn btn-sm btn-warning">Edit</a>
+            <form action="{{ url_for('delete_supplier', id=supplier.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus supplier ini?');">
+              <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4" class="text-center">Belum ada data supplier. Silakan tambahkan.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

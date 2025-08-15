@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Detail Purchase Order #{{ po.id }}{% endblock %}
+
+{% block content %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3>Detail Purchase Order #{{ po.id }}</h3>
+    </div>
+    <div class="card-body">
+      <p><strong>Supplier:</strong> {{ po.supplier.name }}</p>
+      <p><strong>Tanggal Pesan:</strong> {{ po.order_date.strftime('%Y-%m-%d') }}</p>
+      <p><strong>Status:</strong>
+        <span class="badge {% if po.status == 'Completed' %}bg-success{% else %}bg-warning{% endif %}">
+          {{ po.status }}
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h4>Item Barang</h4>
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Produk</th>
+            <th>Jumlah</th>
+            <th>Harga Satuan (Rp)</th>
+            <th>Subtotal (Rp)</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in po.items %}
+            <tr>
+              <td>{{ item.product.name }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ "{:,.0f}".format(item.price_per_unit) }}</td>
+              <td>{{ "{:,.0f}".format(item.quantity * item.price_per_unit) }}</td>
+              <td>
+                <form action="{{ url_for('delete_po_item', item_id=item.id) }}" method="POST" onsubmit="return confirm('Hapus item ini?');">
+                  <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center">Belum ada item di Purchase Order ini.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if po.status == 'Pending' %}
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5>Tambah Item Baru</h5>
+    </div>
+    <div class="card-body">
+      <form action="{{ url_for('add_po_item', po_id=po.id) }}" method="POST">
+        <div class="row">
+          <div class="col-md-4">
+            <label for="product" class="form-label">Produk</label>
+            <select name="product_id" id="product" class="form-select" required>
+              <option value="" disabled selected>-- Pilih Produk --</option>
+              {% for product in all_products %}
+                <option value="{{ product.id }}">{{ product.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="quantity" class="form-label">Jumlah</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <label for="price" class="form-label">Harga Satuan</label>
+            <input type="number" step="any" name="price" id="price" class="form-control" required>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Tambah</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="mt-4">
+      <form action="{{ url_for('receive_po', po_id=po.id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menyelesaikan PO ini dan menerima semua barang? Stok akan diperbarui.');">
+          <button type="submit" class="btn btn-success btn-lg">Selesaikan & Terima Semua Barang</button>
+      </form>
+  </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{{ url_for('list_purchase_orders') }}" class="btn btn-secondary">Kembali ke Daftar PO</a>
+  </div>
+{% endblock %}

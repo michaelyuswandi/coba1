@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Orders{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Sales Orders</h1>
+    <a href="{{ url_for('add_sales_order') }}" class="btn btn-primary">Buat SO Baru</a>
+  </div>
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">SO ID</th>
+        <th scope="col">Customer</th>
+        <th scope="col">Tanggal Pesan</th>
+        <th scope="col">Status</th>
+        <th scope="col">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for so in sales_orders %}
+        <tr>
+          <td>{{ so.id }}</td>
+          <td>{{ so.customer.name }}</td>
+          <td>{{ so.order_date.strftime('%Y-%m-%d') }}</td>
+          <td>
+            <span class="badge {% if so.status == 'Shipped' %}bg-success{% else %}bg-warning{% endif %}">
+              {{ so.status }}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('view_sales_order', id=so.id) }}" class="btn btn-sm btn-info">Lihat Detail</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5" class="text-center">Belum ada Sales Order. Silakan buat baru.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

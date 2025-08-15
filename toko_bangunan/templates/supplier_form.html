@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if supplier %}Edit Supplier{% else %}Tambah Supplier Baru{% endif %}{% endblock %}
+
+{% block content %}
+  <h1>{% if supplier %}Edit Supplier{% else %}Tambah Supplier Baru{% endif %}</h1>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="name" class="form-label">Nama Supplier</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ supplier.name if supplier else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="address" class="form-label">Alamat</label>
+      <textarea class="form-control" id="address" name="address" rows="3">{{ supplier.address if supplier else '' }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label">Telepon</label>
+      <input type="text" class="form-control" id="phone" name="phone" value="{{ supplier.phone if supplier else '' }}">
+    </div>
+    <button type="submit" class="btn btn-primary">{% if supplier %}Update Supplier{% else %}Simpan Supplier{% endif %}</button>
+    <a href="{{ url_for('suppliers') }}" class="btn btn-secondary">Batal</a>
+  </form>
+{% endblock %}

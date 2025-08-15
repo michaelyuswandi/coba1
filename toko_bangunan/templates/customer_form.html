@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if customer %}Edit Customer{% else %}Tambah Customer Baru{% endif %}{% endblock %}
+
+{% block content %}
+  <h1>{% if customer %}Edit Customer{% else %}Tambah Customer Baru{% endif %}</h1>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="name" class="form-label">Nama Customer</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ customer.name if customer else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="address" class="form-label">Alamat</label>
+      <textarea class="form-control" id="address" name="address" rows="3">{{ customer.address if customer else '' }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label">Telepon</label>
+      <input type="text" class="form-control" id="phone" name="phone" value="{{ customer.phone if customer else '' }}">
+    </div>
+    <button type="submit" class="btn btn-primary">{% if customer %}Update Customer{% else %}Simpan Customer{% endif %}</button>
+    <a href="{{ url_for('customers') }}" class="btn btn-secondary">Batal</a>
+  </form>
+{% endblock %}
